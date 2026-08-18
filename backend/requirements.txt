@@ -1,0 +1,34 @@
+fastapi>=0.110
+uvicorn[standard]>=0.29
+pydantic>=2.6
+
+# Only imported at runtime if DATABASE_URL is set (see db.py) — i.e. only
+# when you've connected a Postgres database such as Supabase. Listed
+# unconditionally here so `pip install -r requirements.txt` is still the
+# one setup command regardless of which backend you end up using.
+psycopg[binary]>=3.1
+
+# Connection pooling for the Postgres path. Optional at runtime — db.py
+# falls back to a connection per request and says so at startup if this
+# isn't importable — but strongly recommended against a managed instance
+# like Supabase, where every request opening its own TCP+TLS connection is
+# both slow and a way to hit the instance's connection limit.
+psycopg_pool>=3.2
+
+# Session tokens, and Google's ID tokens. The [crypto] extra pulls in
+# `cryptography`, which is what verifies the RS256 signature on a Google
+# ID token against their published JWKS. Without it the only options are
+# to trust an unverified token — which turns "sign in with Google" into
+# "sign in as anybody" — or to not support Google at all.
+pyjwt[crypto]>=2.8
+
+# Argon2id password hashing (see passwords.py). This is a C extension, and
+# it is the one native dependency in this backend. It is paid for
+# deliberately: Argon2id is the current OWASP/RFC 9106 recommendation and
+# is hybrid — data-independent for the first half-pass, data-dependent
+# after — which resists both side-channel and time-memory-tradeoff attacks.
+# scrypt (stdlib, what this used) is respectable but gets neither.
+#
+# Existing scrypt hashes still verify and upgrade themselves on the next
+# successful login, so this is not a breaking change for a live database.
+argon2-cffi>=23.1

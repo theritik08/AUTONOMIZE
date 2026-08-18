@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Autonomize</title>
+  <link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+  <header class="header">
+    <svg width="22" height="22" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+      <rect width="32" height="32" rx="9" fill="var(--panel-invert-bg)" />
+      <path d="M8 21C8 15.5 11.8 11 16.5 11S25 15.5 25 21" stroke="var(--accent)" stroke-width="2.8" stroke-linecap="round" fill="none" />
+      <circle cx="16.5" cy="21" r="2.1" fill="var(--panel-invert-text)" />
+    </svg>
+    <span class="brand">Autonomize</span>
+    <span class="statusPill" id="statusPill"><span class="statusDot"></span><span id="statusText">Checking…</span></span>
+  </header>
+
+  <main id="app">
+    <div id="loading" class="state">Reading your signal…</div>
+
+    <div id="offline" class="state hidden">
+      <div class="state-title">Backend not reachable</div>
+      <p class="state-body">
+        Start the local backend, then reopen this popup.<br />
+        <code>uvicorn main:app --port 8787</code>
+      </p>
+    </div>
+
+    <div id="empty" class="state hidden">
+      <div class="state-title">No activity tracked yet</div>
+      <p class="state-body">Browse to a supported site and start typing — your score builds from there.</p>
+    </div>
+
+    <div id="authRequired" class="state hidden">
+      <div class="state-title">Sign in required</div>
+      <p class="state-body">This backend has sign-in turned on — open the full dashboard below to sign in.</p>
+    </div>
+
+    <div id="content" class="hidden">
+      <section class="score-row">
+        <div class="gaugeWrap">
+          <svg id="gauge" viewBox="0 0 240 140" width="120" height="70"></svg>
+          <div class="readout">
+            <span id="scoreNumber" class="tabular">--</span>
+          </div>
+        </div>
+        <div class="scoreMeta">
+          <div class="caption">Independence score</div>
+          <div id="scoreDelta" class="delta"></div>
+          <div id="riskChip" class="riskChip hidden"></div>
+        </div>
+      </section>
+
+      <section class="ratio-section">
+        <div class="section-title">This week</div>
+        <div class="ratio-bar"><div id="ratioIndependent" class="ratio-fill"></div></div>
+        <div class="ratio-legend">
+          <span><i class="dot dot-independent"></i>Independent <b id="independentMinutes" class="tabular">0m</b></span>
+          <span><i class="dot dot-assisted"></i>AI-assisted <b id="assistedMinutes" class="tabular">0m</b></span>
+        </div>
+      </section>
+
+      <div class="streakRow">
+        <span class="streakValue tabular" id="streakValue">0</span>
+        <span class="streakLabel">day streak of net-positive independence</span>
+      </div>
+    </div>
+
+    <button id="openDashboard" class="primaryButton">
+      Open full dashboard
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M3 9L9 3M9 3H4M9 3V8" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+
+    <!-- Account linking. Collapsed to a single line until the user acts,
+         because a fresh install works with no account at all and a signup
+         prompt on first open would contradict that. -->
+    <div class="accountRow" id="trackingRow">
+      <span class="accountHint" id="trackingText">Tracking —</span>
+    </div>
+
+    <section class="accountBox" id="accountBox">
+      <div class="accountRow" id="accountUnlinked">
+        <span class="accountHint">Saving to this browser only.</span>
+        <button id="linkAccount" class="linkButton">Link an account</button>
+      </div>
+
+      <div class="accountRow hidden" id="accountLinked">
+        <span class="accountHint">Signed in as <b id="accountEmail"></b></span>
+        <button id="signOutDevice" class="linkButton">Sign out</button>
+      </div>
+
+      <div class="linkCodeBox hidden" id="linkCodeBox">
+        <p class="linkStep">1. Open the dashboard and sign in.</p>
+        <p class="linkStep">2. Enter this code:</p>
+        <div class="linkCode tabular" id="linkCode">------</div>
+        <p class="linkExpiry" id="linkExpiry"></p>
+        <button id="cancelLink" class="linkButton">Cancel</button>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <span>No text you type or paste is ever read or sent.</span>
+    <a href="#" id="settingsLink">Settings</a>
+  </footer>
+
+  <script src="popup.js"></script>
+</body>
+</html>

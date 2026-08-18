@@ -1,0 +1,13 @@
+{
+  "name": "autonomize-e2e",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Playwright regression suite driving the real popup/dashboard against a live backend instance — see README's 'Automated tests' section.",
+  "type": "module",
+  "scripts": {
+    "test": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.62.1"
+  }
+}

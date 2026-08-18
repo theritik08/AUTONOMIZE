@@ -1,0 +1,210 @@
+/*
+  Popup design tokens — intentionally a literal-value subset of
+  dashboard-app/src/styles/tokens.css, not a shared import. The popup is a
+  small hand-written companion view (its own tiny script, no build step) to
+  the full React dashboard; pulling in the whole bundle for a 320px surface
+  would add weight for no benefit, and the aurora/mesh background effects
+  wouldn't read as anything but noise at this size. Keep these values in
+  sync with tokens.css by hand if the palette changes.
+
+  Matches the dashboard's light-first cream/ink/amber palette (see
+  dashboard-app/src/styles/tokens.css [data-theme='light']) — the popup
+  doesn't offer a theme toggle of its own, so it stays pinned to the same
+  theme the full dashboard opens in by default.
+*/
+:root {
+  --surface-0: #f3efe7;
+  --surface-1: #ffffff;
+  --surface-2: #ffffff;
+  --surface-3: #f6f2ea;
+  --border-subtle: rgba(23, 21, 15, 0.05);
+  --border-default: rgba(23, 21, 15, 0.09);
+  --text-primary: #17150f;
+  --text-secondary: rgba(23, 21, 15, 0.58);
+  --text-tertiary: rgba(23, 21, 15, 0.38);
+  --accent: #f0b93d;
+  --panel-invert-bg: #17181a;
+  --panel-invert-text: #f4f1ea;
+  --signal-good: #4c9a6a;
+  --signal-good-soft: rgba(76, 154, 106, 0.13);
+  --signal-caution: #d69a3b;
+  --signal-caution-soft: rgba(214, 154, 59, 0.15);
+  --signal-risk: #cf5c48;
+  --signal-risk-soft: rgba(207, 92, 72, 0.13);
+  --shadow-sm: 0 1px 2px rgba(30, 26, 15, 0.04);
+}
+
+* { box-sizing: border-box; }
+
+body {
+  width: 320px;
+  margin: 0;
+  background: var(--surface-0);
+  color: var(--text-primary);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 13px;
+}
+
+.tabular { font-variant-numeric: tabular-nums; }
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 13px 14px 11px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+.brand { font-size: 14px; font-weight: 650; letter-spacing: -0.01em; }
+
+.statusPill {
+  margin-left: auto;
+  display: flex; align-items: center; gap: 5px;
+  font-size: 10px; font-weight: 600; color: var(--text-tertiary);
+  padding: 3px 8px; border-radius: 999px; background: var(--surface-2);
+  border: 1px solid var(--border-subtle);
+}
+.statusDot { width: 5px; height: 5px; border-radius: 50%; background: var(--text-tertiary); }
+.statusPill.online .statusDot { background: var(--signal-good); }
+.statusPill.offline .statusDot { background: var(--signal-risk); }
+
+main { padding: 14px 16px 6px; min-height: 190px; }
+
+.state { text-align: center; padding: 24px 6px; color: var(--text-tertiary); font-size: 12px; }
+.state-title { color: var(--text-primary); font-weight: 600; margin-bottom: 6px; font-size: 13px; }
+.state-body code {
+  display: inline-block; margin-top: 6px; background: var(--surface-2);
+  padding: 3px 7px; border-radius: 6px; font-size: 10.5px; color: var(--signal-good);
+}
+.hidden { display: none !important; }
+
+.score-row { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+.gaugeWrap { position: relative; flex-shrink: 0; }
+.readout {
+  position: absolute; left: 50%; bottom: 2px; transform: translateX(-50%);
+  font-size: 24px; font-weight: 700; letter-spacing: -0.02em;
+}
+.scoreMeta { min-width: 0; }
+.caption { font-size: 10px; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; }
+.delta { font-size: 11.5px; font-weight: 600; margin-top: 3px; }
+.delta.up { color: var(--signal-good); }
+.delta.down { color: var(--signal-caution); }
+.delta.flat { color: var(--text-tertiary); }
+
+.riskChip {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em;
+  padding: 2px 7px; border-radius: 999px; margin-top: 6px;
+}
+.riskChip.low { background: var(--signal-good-soft); color: var(--signal-good); }
+.riskChip.medium { background: var(--signal-caution-soft); color: var(--signal-caution); }
+.riskChip.high { background: var(--signal-risk-soft); color: var(--signal-risk); }
+
+.section-title { font-size: 10.5px; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: .04em; margin-bottom: 7px; }
+
+.ratio-bar { height: 8px; border-radius: 6px; overflow: hidden; background: var(--signal-caution); display: flex; }
+.ratio-fill { background: var(--signal-good); height: 100%; }
+.ratio-legend { display: flex; justify-content: space-between; margin-top: 7px; font-size: 10.5px; color: var(--text-secondary); }
+.dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 4px; }
+.dot-independent { background: var(--signal-good); }
+.dot-assisted { background: var(--signal-caution); }
+
+.streakRow {
+  display: flex; align-items: baseline; gap: 7px;
+  margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--border-subtle);
+}
+.streakValue { font-size: 18px; font-weight: 700; color: var(--signal-good); }
+.streakLabel { font-size: 10.5px; color: var(--text-tertiary); }
+
+.primaryButton {
+  width: 100%;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  margin-top: 14px;
+  background: var(--panel-invert-bg); color: var(--panel-invert-text);
+  border: none; border-radius: 8px; padding: 9px 12px;
+  font-size: 12.5px; font-weight: 650; cursor: pointer;
+  transition: opacity 120ms ease-out;
+}
+.primaryButton:hover { opacity: 0.85; }
+
+.footer {
+  display: flex; justify-content: space-between; align-items: center;
+  gap: 8px; padding: 10px 16px 13px; border-top: 1px solid var(--border-subtle);
+  font-size: 9.5px; color: var(--text-tertiary);
+}
+.footer a { color: var(--signal-good); text-decoration: none; white-space: nowrap; cursor: pointer; }
+
+/* ---------------------------------------------------------------------------
+   Account linking
+
+   Uses the existing tokens only — no new colours, no new type scale. The
+   unlinked state is one quiet line because a fresh install genuinely works
+   without an account, and a loud signup prompt would contradict that.
+   --------------------------------------------------------------------------- */
+.accountBox {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.accountRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.accountHint {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.accountHint b { color: var(--text-secondary); font-weight: 600; }
+
+.linkButton {
+  background: none;
+  border: none;
+  padding: 2px 4px;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.linkButton:hover { background: var(--surface-3); color: var(--text-primary); }
+
+.linkCodeBox {
+  background: var(--surface-3);
+  border: 1px solid var(--border-default);
+  border-radius: 8px;
+  padding: 10px 12px;
+  text-align: center;
+}
+
+.linkStep {
+  margin: 0 0 4px;
+  font-size: 11px;
+  color: var(--text-secondary);
+  text-align: left;
+}
+
+.linkCode {
+  margin: 8px 0 4px;
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  color: var(--text-primary);
+}
+
+.linkExpiry {
+  margin: 0 0 8px;
+  font-size: 10px;
+  color: var(--text-tertiary);
+}
+
+.accountBox .hidden { display: none; }

@@ -1,0 +1,234 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+# A second push to the same branch cancels the first — no point burning
+# minutes on a commit that's already been superseded.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: Backend (SQLite + Postgres)
+    runs-on: ubuntu-latest
+
+    # The dual-backend suite is only meaningful against a real Postgres,
+    # so CI provides one rather than letting those tests skip silently.
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: backend/requirements-dev.txt
+
+      - run: pip install -r requirements-dev.txt
+      # The ML oracle. NOT in requirements.txt — see requirements-ml.txt for
+      # why scikit-learn is a test dependency rather than a runtime one.
+      # Without it tests/test_ml_against_sklearn.py skips, and the whole
+      # point of that file is that it runs in CI.
+      - run: pip install -r requirements-ml.txt
+
+      - name: pytest — default zero-config path (SQLite)
+        # Runs first and without TEST_DATABASE_URL, so a regression that
+        # only breaks the zero-setup experience can't hide behind Postgres.
+        run: pytest -q
+
+      - name: pytest — dual-backend (SQLite + real Postgres)
+        env:
+          TEST_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/postgres
+        run: pytest -q
+
+      - name: Verify AUTONOMIZE_PG_SCHEMA against a real Postgres
+        # The unit tests assert db.py builds the right connection options.
+        # This asserts the server honours them: that migrations land in the
+        # named schema, that a POOLED connection keeps its search_path
+        # across checkouts, and — the one that actually matters — that
+        # nothing leaks into `public`, which on a Supabase project is the
+        # difference between "not exposed to the API" and "exposed".
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/postgres
+          AUTONOMIZE_PG_SCHEMA: autonomize
+        run: python3 verify_schema_target.py
+
+      - name: Fail if any dual-backend test skipped
+        # Without this, a broken TEST_DATABASE_URL would turn the Postgres
+        # half into skips and CI would still be green — the exact failure
+        # this job exists to prevent.
+        env:
+          TEST_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/postgres
+        run: |
+          output=$(pytest -q tests/test_db_dual_backend.py 2>&1)
+          echo "$output"
+          if echo "$output" | grep -qi "skipped"; then
+            echo "::error::Postgres tests skipped — the dual-backend suite did not actually run."
+            exit 1
+          fi
+
+  dashboard:
+    name: Dashboard (syntax + wiring audit)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: dashboard-web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      # dashboard-web is plain HTML/CSS/JS: no build step, no bundler, no
+      # committed build artefact to go stale. This replaced a React app
+      # whose compiled output was committed and had to be checked for
+      # staleness on every change — that entire class of failure is gone
+      # along with the second dashboard.
+      - name: Scripts parse
+        run: |
+          for f in lib.js autonomize-api.js script.js app.js; do
+            node --check "$f"
+          done
+
+      - name: Unit tests for the pure presentation logic
+        # lib.js holds the bucketing, chart geometry, tone selection and
+        # formatting — the part worth testing directly, and the coverage
+        # that was lost when the second dashboard was removed. Node's own
+        # runner: the module has no DOM and no network, so a test framework
+        # would add nothing.
+        run: node --test tests/*.test.js
+
+      - name: Every interactive control is wired, and no dead links remain
+        # The rule this enforces: a control that exists must do something.
+        # It is cheap to check statically and it is exactly the regression
+        # that reappears whenever markup is added faster than behaviour.
+        run: |
+          python3 - <<'AUDIT'
+          import re, sys
+          html = open('index.html').read()
+          js = open('app.js').read() + open('script.js').read()
+
+          ids = set(re.findall(
+              r'<(?:button|input|select|textarea)[^>]*\bid="([^"]+)"', html))
+          unbound = sorted(i for i in ids if i not in js)
+
+          hrefs = re.findall(r'<a[^>]*href="([^"]*)"', html)
+          dead = [h for h in hrefs if h in ('#', '', 'javascript:void(0)')]
+
+          failed = False
+          if unbound:
+              print(f"::error::interactive elements with no handler: {unbound}")
+              failed = True
+          if dead:
+              print(f"::error::placeholder links: {dead}")
+              failed = True
+          print(f"checked {len(ids)} controls and {len(hrefs)} links")
+          sys.exit(1 if failed else 0)
+          AUDIT
+
+      - name: Exactly one dashboard exists
+        working-directory: .
+        # The consolidation this guards: a second dashboard reappearing is
+        # a silent regression that only shows up as duplicate settings
+        # screens weeks later.
+        run: |
+          for stale in dashboard-app extension/dashboard extension/dashboard-web; do
+            if [ -e "$stale" ]; then
+              echo "::error::$stale is back — there must be exactly one dashboard (dashboard-web)."
+              exit 1
+            fi
+          done
+
+  e2e:
+    name: E2E (dashboard + real unpacked extension)
+    runs-on: ubuntu-latest
+    needs: [backend, dashboard]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+      - run: pip install -r backend/requirements.txt
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: e2e/package-lock.json
+
+      - run: npm ci
+        working-directory: e2e
+
+      # Chromium only: the extension project needs a full Chrome binary
+      # (headless_shell can't load extensions), and --with-deps pulls the
+      # system libraries the runner image doesn't ship.
+      - run: npx playwright install --with-deps chromium
+        working-directory: e2e
+
+      - run: npm test
+        working-directory: e2e
+
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: |
+            e2e/playwright-report/
+            e2e/test-results/
+          retention-days: 7
+
+  audit:
+    name: Dependency audit
+    runs-on: ubuntu-latest
+    # Deliberately not a required gate. A newly published advisory against a
+    # transitive dependency would otherwise turn every unrelated pull request
+    # red, which trains people to ignore the signal — the opposite of what an
+    # audit is for. It reports; a human decides.
+    continue-on-error: true
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: pip-audit (backend)
+        run: |
+          pip install pip-audit
+          pip-audit -r backend/requirements.txt --desc
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      # dashboard-web has no npm dependencies at all — it is plain
+      # HTML/CSS/JS — so the only JavaScript lockfile left to audit is the
+      # e2e harness, which never ships to anyone.
+      - name: npm audit (e2e harness)
+        working-directory: e2e
+        run: npm audit --omit=dev --audit-level=moderate

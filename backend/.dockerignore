@@ -1,0 +1,14 @@
+# Keeps the build context small and, more importantly, keeps secrets and
+# local databases out of the image entirely.
+.env
+*.db
+*.db-wal
+*.db-shm
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+tests/
+Dockerfile
+.dockerignore

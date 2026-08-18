@@ -1,0 +1,32 @@
+# Dependency updates.
+#
+# The strongest security property this project has is a small dependency
+# surface — six backend packages and, since the dashboards were
+# consolidated, ZERO frontend runtime packages: dashboard-web is plain
+# HTML/CSS/JS with no bundler and no dependencies. So there is not much
+# here to go stale. That is exactly why it is worth automating:
+# with this few dependencies, reviewing an update is a two-minute job, and
+# the failure mode of NOT doing it is a known CVE sitting unnoticed in a
+# transitive dependency for a year.
+#
+# Weekly rather than daily: this is a student project, not a service with an
+# on-call rota, and a daily cadence produces noise that gets ignored, which
+# is worse than a slower cadence that gets read.
+version: 2
+updates:
+  - package-ecosystem: pip
+    directory: /backend
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+
+  - package-ecosystem: npm
+    directory: /e2e
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 3
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly

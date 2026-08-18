@@ -1,0 +1,79 @@
+# Publishes docs/demo.html to GitHub Pages, so the project has a URL you
+# can put in a CV or a message rather than asking someone to clone and run
+# a backend. The page is fully interactive but statically seeded — see
+# backend/build_demo_page.py for what that does and doesn't mean.
+#
+# Enable once in the repo: Settings -> Pages -> Source: "GitHub Actions".
+name: Deploy demo to Pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "docs/**"
+      - ".github/workflows/pages.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Never cancel a half-finished deploy: unlike CI, an interrupted publish
+# can leave the live site in an inconsistent state.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # REGENERATED, not copied.
+      #
+      # This workflow used to publish the committed docs/demo.html
+      # verbatim. That file is a build artefact, so it drifted the moment
+      # anyone shipped a feature without rebuilding it by hand — and the
+      # public demo is the first thing a reviewer sees. It was months
+      # stale, showing a dashboard without the retrieval checks, the ML
+      # panel, or the coins card, while the README described all three.
+      #
+      # Rebuilding here removes that entire class of bug: the published
+      # page cannot be older than the commit that published it.
+      - name: Build the demo against a freshly seeded backend
+        run: |
+          cd backend
+          pip install -r requirements.txt
+          python3 -m uvicorn main:app --port 8787 &
+          for i in $(seq 1 30); do
+            curl -sf http://127.0.0.1:8787/api/health && break || sleep 1
+          done
+          python3 seed_demo.py
+          python3 seed_question_bank.py
+          python3 build_demo_page.py --backend http://127.0.0.1:8787
+        env:
+          AUTONOMIZE_DB_PATH: /tmp/pages-demo.db
+
+      - name: Land the demo at the site root
+        # Pages serves index.html by default; demo.html would otherwise
+        # need an explicit path in every link you share.
+        run: |
+          mkdir -p _site
+          cp docs/demo.html _site/index.html
+          cp -r docs/screenshots _site/screenshots
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - id: deployment
+        uses: actions/deploy-pages@v4

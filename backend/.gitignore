@@ -1,0 +1,3 @@
+# Written by seed_demo.py and read by build_demo_page.py. Contains a real
+# bearer token for the demo account — never commit it.
+.demo-identity.json

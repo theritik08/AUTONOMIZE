@@ -1,0 +1,5 @@
+# Test-only dependencies — not needed to run the backend, only to run its
+# test suite (`pytest` from the `backend/` directory). Kept separate from
+# requirements.txt so a production install doesn't pull in test tooling.
+-r requirements.txt
+pytest>=8.0

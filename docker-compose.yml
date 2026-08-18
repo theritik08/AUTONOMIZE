@@ -1,0 +1,102 @@
+# Local "production-shaped" stack: the backend on Postgres with pooling,
+# rather than the default single-file SQLite. Useful for reproducing a
+# deployed setup before actually deploying one.
+#
+#   docker compose up --build
+#   curl localhost:8787/api/health
+#
+# The extension talks to http://localhost:8787 by default, so it works
+# against this with no settings change.
+#
+# ─────────────────────────────────────────────────────────────────────────
+# THIS FILE IS NOT A DEPLOYMENT TEMPLATE. Read this before copying it.
+# ─────────────────────────────────────────────────────────────────────────
+#
+# "Production-shaped" above means the STORAGE is shaped like production —
+# Postgres with pooling instead of a single SQLite file. It does not mean
+# the security configuration is. Three things are deliberately absent, and
+# each of them is a real hole if this file is deployed as-is:
+#
+#   AUTONOMIZE_AUTH_SECRET       Unset, so the backend generates a random
+#                                one per process and logs that it did.
+#                                Every session is invalidated on restart,
+#                                and two replicas cannot validate each
+#                                other's tokens.
+#
+#   AUTONOMIZE_ALLOWED_ORIGINS   Unset, so CORS falls back to a wildcard
+#                                with credentials disabled. Cookie-based
+#                                dashboard login does not work, and the
+#                                backend logs a warning saying so.
+#
+#   AUTONOMIZE_SECURE_COOKIES    Unset, so cookies are issued without the
+#                                Secure flag. Correct over plain http on
+#                                localhost; wrong the moment there is TLS
+#                                and a real user.
+#
+# The Postgres password below is `autonomize`, in a container reachable
+# only from this compose network. It is a local default, not a secret, and
+# it must not survive a copy-paste into anything internet-facing.
+#
+# For a real deployment set all three variables (see backend/.env.example
+# and AUTHENTICATION.md), give Postgres a generated password, and put TLS
+# in front. The commented block under `backend.environment` below is the
+# shape to fill in.
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: autonomize
+      POSTGRES_PASSWORD: autonomize
+      POSTGRES_DB: autonomize
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      # The backend applies migrations on startup, so it must not start
+      # until Postgres can actually accept connections.
+      test: ["CMD-SHELL", "pg_isready -U autonomize"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  backend:
+    build: ./backend
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://autonomize:autonomize@db:5432/autonomize
+      # This database belongs to Autonomize alone, so `public` is correct
+      # here. It is set explicitly rather than left to the default because
+      # this file is the thing people copy when deploying to a SHARED
+      # database (a Supabase project with something else already in it),
+      # where the right answer is `autonomize` — see backend/.env.example.
+      AUTONOMIZE_PG_SCHEMA: public
+      AUTONOMIZE_PG_POOL_MIN: "1"
+      AUTONOMIZE_PG_POOL_MAX: "10"
+      # Sensible for a shared instance; omit for no limit. See ratelimit.py
+      # for what this can and can't protect against.
+      AUTONOMIZE_RATE_LIMIT: "300/60"
+      AUTONOMIZE_LOG_LEVEL: INFO
+
+      # ── Required for any real deployment. Left commented so that running
+      # this locally needs no setup, and so that an operator has to make a
+      # deliberate choice rather than inherit a default that looks safe.
+      # See the header of this file for what each one being unset costs.
+      #
+      # AUTONOMIZE_AUTH_SECRET: "<openssl rand -hex 32>"
+      # AUTONOMIZE_ALLOWED_ORIGINS: "https://dashboard.example.edu"
+      # AUTONOMIZE_SECURE_COOKIES: "1"
+      #
+      # Real-time delivery is an IN-PROCESS bus (see backend/events.py).
+      # One worker is the supported configuration. Setting WEB_CONCURRENCY
+      # above 1 without a shared broker means dashboards connected to one
+      # worker will not see events published on another — they fall back to
+      # periodic refresh, silently, for some users. The backend logs a
+      # warning at startup when this is set above 1.
+      # WEB_CONCURRENCY: "1"
+    ports:
+      - "8787:8787"
+
+volumes:
+  pgdata:

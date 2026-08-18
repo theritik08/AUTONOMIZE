@@ -1,0 +1,36 @@
+# Development and CI only. NOT installed in production.
+#
+# Nothing in the serving path imports any of these. `requirements.txt` stays
+# at six pure-Python packages, `pip install -r requirements.txt` still works
+# from a fresh clone with no compiler, and the container stays small. That
+# property was worth protecting, so these live in a separate file.
+#
+# WHY THESE ARE HERE AT ALL
+# -------------------------
+# Not for accuracy. The head-to-head benchmark is in docs/ML.md, and its
+# result is that on this data a hand-written ridge regression (MAE 5.756)
+# ties scikit-learn's best configuration (5.755) and beats every tree
+# method either implementation offers. Adding ~100 MB of compiled
+# dependencies to gain 0.001 MAE would be a bad trade made for the look of
+# the stack.
+#
+# What scikit-learn genuinely earns is the job it is best at here: being a
+# reference implementation to check mine against.
+# `tests/test_ml_against_sklearn.py` asserts that
+#
+#   - ml.models.RidgeRegression matches sklearn.linear_model.Ridge to 1e-6
+#     on both predictions AND coefficients;
+#   - ml.models.GradientBoostedTrees stays within 35% of
+#     HistGradientBoostingRegressor on a problem built to favour trees;
+#   - ml.isolation.IsolationForest ranks anomalies with Spearman rho > 0.9
+#     against sklearn.ensemble.IsolationForest.
+#
+# A hand-written learner nobody cross-checked is a liability. One that
+# provably agrees with the reference is a demonstration — and the tests
+# skip cleanly when this file is not installed, so production is unaffected.
+
+scikit-learn==1.8.0
+numpy==2.4.4
+# scipy is a scikit-learn dependency and is used directly for the Spearman
+# rank correlation in the isolation-forest oracle test.
+scipy==1.17.1

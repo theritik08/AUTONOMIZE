@@ -1,0 +1,1049 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Autonomize — Dashboard</title>
+
+<!-- favicon: drop your file at favicon.png -->
+<link rel="icon" type="image/png" href="favicon.png">
+<link rel="apple-touch-icon" href="favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Inter+Tight:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a class="skip-link" href="#main">Skip to content</a>
+
+<header class="topbar">
+  <div class="topbar-inner">
+
+    <a class="brand" href="#main">
+      <img class="brand-mark" id="brandMark" src="logo.png" alt="Autonomize logo" width="34" height="34">
+      <span class="brand-name">Autonomize</span>
+    </a>
+
+    <button class="nav-toggle" id="navToggle" aria-expanded="false" aria-controls="primaryNav" aria-label="Open menu">
+      <span></span><span></span><span></span>
+    </button>
+
+    <!-- Primary navigation. Four destinations, nothing else: Settings and
+         theme are reached through the profile avatar, which is the single
+         entry point for everything about the account and its configuration.
+         Two ways to reach one screen is how a settings page ends up
+         implemented twice. -->
+    <nav class="nav" id="primaryNav" aria-label="Primary">
+      <a class="nav-link is-active" href="#/dashboard" data-route="dashboard" aria-current="page">Dashboard</a>
+      <a class="nav-link" href="#/sessions" data-route="sessions">Sessions</a>
+      <a class="nav-link" href="#/insights" data-route="insights">Insights</a>
+      <a class="nav-link" href="#/calendar" data-route="calendar">Calendar</a>
+    </nav>
+
+    <div class="topbar-actions">
+      <div class="notif-wrap">
+        <button class="icon-btn" id="notifBtn" type="button"
+                aria-label="Notifications" aria-expanded="false" aria-haspopup="true">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 16v-5a6 6 0 1 0-12 0v5l-2 2h16l-2-2Z"/><path d="M10 21a2 2 0 0 0 4 0"/></svg>
+          <span class="notif-dot" id="notifDot" hidden></span>
+        </button>
+        <div class="menu notif-menu" id="notifMenu" role="dialog" aria-label="Notifications" hidden>
+          <p class="menu-head">Notifications</p>
+          <ul class="notif-list" id="notifList"></ul>
+        </div>
+      </div>
+
+      <div class="avatar-wrap">
+        <button class="avatar-btn" id="navAvatar" type="button"
+                aria-label="Account and settings" aria-expanded="false" aria-haspopup="true">
+          <span class="avatar-initials" id="navInitials">—</span>
+        </button>
+
+        <!-- The single entry point for account + configuration. Every item
+             here jumps to a real section of the one Profile & Settings
+             page; none of them opens a second settings surface. -->
+        <div class="menu profile-menu" id="profileMenu" role="menu" hidden>
+          <div class="menu-id">
+            <span class="menu-avatar" id="menuInitials">—</span>
+            <span class="menu-id-text">
+              <strong id="menuName">Signed in</strong>
+              <small id="menuEmail"></small>
+            </span>
+          </div>
+          <a class="menu-item" role="menuitem" href="#/settings/profile">Profile</a>
+          <a class="menu-item" role="menuitem" href="#/settings/appearance">Preferences &amp; Appearance</a>
+          <a class="menu-item" role="menuitem" href="#/settings/tracking">Tracking</a>
+          <a class="menu-item" role="menuitem" href="#/settings/privacy">Privacy &amp; Data</a>
+          <a class="menu-item" role="menuitem" href="#/settings/security">Security</a>
+          <a class="menu-item" role="menuitem" href="#/settings/devices">Connected Devices</a>
+          <a class="menu-item" role="menuitem" href="#/settings/notifications">Notifications</a>
+          <a class="menu-item" role="menuitem" href="#/settings/about">About</a>
+          <button class="menu-item menu-danger" role="menuitem" type="button" id="menuLogout">Log out</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</header>
+
+<main id="main">
+
+<!-- ═══════════════════════════════════════════════════════════
+     DASHBOARD
+     ═══════════════════════════════════════════════════════════ -->
+<div class="view" data-view="dashboard">
+
+  <!-- ── hero ─────────────────────────────────────────────── -->
+  <section class="hero">
+    <h1 class="hero-title" id="greeting">Good morning</h1>
+    <p class="hero-sub">Here's where your independence stands right now.</p>
+
+    <!-- QUICK STATUS — the whole point of this strip is that the answer to
+         "how am I doing right now" is readable in two seconds without
+         scrolling or interpreting a chart. Every value is server-computed;
+         nothing here is a placeholder, and a field with no data yet renders
+         an em dash rather than a zero, because "none yet" and "zero" are
+         different claims and a new user reading 0 concludes the tracking is
+         broken. -->
+    <section class="quickstatus" id="quickStatus" aria-label="Quick status">
+      <div class="qs-primary">
+        <p class="qs-score"><span id="qsScore">—</span><small>/100</small></p>
+        <p class="qs-label">Independence score</p>
+        <p class="qs-delta" id="qsDelta"></p>
+      </div>
+
+      <ul class="qs-metrics">
+        <li><span class="qs-val" id="qsIndependent">—</span><span class="qs-cap">Independent</span></li>
+        <li><span class="qs-val" id="qsAssisted">—</span><span class="qs-cap">AI-assisted</span></li>
+        <li><span class="qs-val" id="qsOnTrack">—</span><span class="qs-cap">On track</span></li>
+        <li><span class="qs-val" id="qsToday">—</span><span class="qs-cap">Tracked today</span></li>
+      </ul>
+
+      <div class="qs-live">
+        <!-- Live-stream state. Distinct from "is there an active session":
+             this says whether the dashboard is receiving events at all, so
+             a stale number is never mistaken for a quiet one. -->
+        <p class="qs-live-row">
+          <span class="live-pill" id="livePill" data-state="connecting">
+            <span class="live-dot" aria-hidden="true"></span>
+            <span id="liveLabel">Connecting…</span>
+          </span>
+        </p>
+        <p class="qs-live-row">
+          <span class="status-dot" id="qsDot" aria-hidden="true"></span>
+          <span id="qsSession">No active session</span>
+        </p>
+        <p class="qs-live-sub" id="qsSite">—</p>
+        <p class="qs-live-sub qs-updated" id="qsUpdated">—</p>
+      </div>
+
+      <!-- Shown only while the personal baseline is still forming. Honest
+           about what it can and cannot yet say — see K. -->
+      <p class="qs-baseline" id="qsBaseline" hidden></p>
+    </section>
+
+    <div class="hero-metrics">
+      <ul class="ring-row" id="ringRow"></ul>
+      <ul class="chip-row">
+        <li class="chip">
+          <span class="chip-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M3 12h4l2-6 4 12 2-6h6"/></svg>
+          </span>
+          <span class="chip-text"><strong data-autonomize="session_count">—</strong><small>Sessions</small></span>
+        </li>
+        <li class="chip">
+          <span class="chip-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M5 21V4"/><path d="M5 5h11l-2 3 2 3H5"/></svg>
+          </span>
+          <span class="chip-text"><strong data-autonomize="streak_days">—</strong><small>Streak</small></span>
+        </li>
+        <li class="chip">
+          <span class="chip-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 0 1 0 18a15 15 0 0 1 0-18"/></svg>
+          </span>
+          <span class="chip-text"><strong data-autonomize="site_count">—</strong><small>Sites</small></span>
+        </li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ── primary cards ────────────────────────────────────── -->
+  <section class="grid" aria-label="Score summary">
+
+    <article class="card card-tilt span-3 card-score">
+      <div class="gauge-wrap">
+        <svg class="gauge" viewBox="0 0 240 150" role="img" id="gaugeSvg" aria-label="Independence score">
+          <path class="gauge-track" d="M30 140 A90 90 0 0 1 210 140"/>
+          <path class="gauge-fill" id="gaugeFill" d="M30 140 A90 90 0 0 1 210 140"/>
+          <circle class="gauge-knob" id="gaugeKnob" r="11" cx="210" cy="140"/>
+        </svg>
+        <p class="gauge-value"><span id="scoreValue">—</span><small>/100</small></p>
+      </div>
+      <h2 class="card-eyebrow">Independence score</h2>
+      <p class="card-delta" id="scoreDelta">—</p>
+      <p class="card-note" id="scoreNote">Not enough data yet.</p>
+    </article>
+
+    <article class="card card-tilt span-3" id="coinsCard">
+      <h2 class="card-title">Autonomize Coins</h2>
+      <p class="card-sub">Earned for work you finish yourself</p>
+
+      <div class="coin-hero">
+        <img class="coin" src="coin.png" alt="" width="60" height="60">
+        <p class="coin-balance" id="coinBalance">0</p>
+        <p class="coin-delta" id="coinDelta"></p>
+      </div>
+
+      <div class="coin-tier">
+        <p class="coin-tier-row"><span id="coinTier">—</span><span id="coinNext"></span></p>
+        <div class="coin-track"><span class="coin-fill" id="coinFill"></span></div>
+      </div>
+
+      <ul class="coin-ledger" id="coinLedger"></ul>
+
+      <p class="coin-rule">+10 for a session with nothing pasted &middot; &minus;1 for every 100 characters pasted</p>
+    </article>
+
+    <article class="card card-tilt span-3">
+      <h2 class="card-title">Weekly activity</h2>
+      <p class="card-sub">Tracked time, last 7 days</p>
+      <div class="weekly">
+        <p class="weekly-total"><span>—</span></p>
+        <p class="weekly-label">tracked this week</p>
+      </div>
+      <ul class="week-bars" id="weekBars"></ul>
+    </article>
+
+    <article class="card card-tilt span-3">
+      <h2 class="card-title">Today</h2>
+      <p class="card-sub">Independent share so far</p>
+      <div class="today-ring">
+        <svg viewBox="0 0 120 120" role="img" aria-label="No independent work tracked today">
+          <circle class="ring-track" cx="60" cy="60" r="50"/>
+        </svg>
+        <p class="today-dash">—</p>
+        <p class="today-cap">independent</p>
+      </div>
+      <p class="today-total">0m</p>
+      <p class="card-note">tracked today</p>
+    </article>
+
+  </section>
+
+  <!-- Compact connection + tracking status. The detailed configuration this
+       replaces now lives in Profile → Settings; keeping a one-line status
+       here means the user can still see at a glance that data is flowing,
+       without the Dashboard carrying a block of implementation detail. -->
+  <section class="grid" aria-label="Connection">
+    <article class="card span-12 statusbar">
+      <p class="statusbar-item">
+        <span class="status-dot" id="sbDot" aria-hidden="true"></span>
+        <span id="sbConnection">Checking connection…</span>
+      </p>
+      <p class="statusbar-item"><span id="sbTracking">Tracking —</span></p>
+      <p class="statusbar-item"><span id="sbExtension">Extension —</span></p>
+      <a class="statusbar-link" href="#/settings/tracking">Manage in Settings</a>
+    </article>
+  </section>
+
+</div><!-- /dashboard -->
+
+<!-- ═══════════════════════════════════════════════════════════
+     INSIGHTS
+     ═══════════════════════════════════════════════════════════ -->
+<div class="view" data-view="insights" hidden>
+  <section class="grid" aria-label="Writing composition">
+
+    <article class="card card-tilt span-8" id="compositionCard">
+      <header class="card-head">
+        <div>
+          <h2 class="card-title">What you wrote vs. what was pasted</h2>
+          <p class="card-sub">Characters produced each day — the evidence behind your score</p>
+        </div>
+        <div class="seg" role="group" aria-label="Chart view">
+          <button class="seg-btn is-on" type="button" data-view="bars" aria-pressed="true">Bars</button>
+          <button class="seg-btn" type="button" data-view="lines" aria-pressed="false">Lines</button>
+        </div>
+      </header>
+
+      <div class="legend" id="chartLegend"></div>
+
+      <div class="chart" id="chart"></div>
+
+      <!-- Filled from score.forecast by script.js. Left empty in markup on
+           purpose: a hardcoded trend sentence is a claim about the user's
+           data made before any of it was read. -->
+      <p class="chart-foot">
+        <span class="legend-item"><i class="swatch swatch-green"></i><span id="trendNote">—</span></span>
+        <span class="legend-pct" id="trendFit"></span>
+      </p>
+    </article>
+
+    <article class="card card-tilt span-4">
+      <h2 class="card-title">Exam &amp; assignment integrity</h2>
+      <p class="card-sub">Strict mode — quizzes, exams, and graded assignment portals</p>
+      <p class="risk-line">
+        <span class="badge badge-risk" id="riskBadge"><span class="status-dot dot-risk" aria-hidden="true"></span><span data-autonomize="assessment_risk_level">—</span></span>
+        <span class="risk-score"><span data-autonomize="assessment_score">—</span><small>/100</small></span>
+      </p>
+      <p class="card-note" id="riskNote"></p>
+      <div class="meter"><span class="meter-fill" id="riskMeter" style="width:0%"></span></div>
+
+      <div class="panel-dark">
+        <h3 class="panel-dark-title">Recent graded sessions</h3>
+        <ul class="graded-list" id="gradedList"></ul>
+      </div>
+    </article>
+
+  </section>
+
+  <!-- Ported from the React dashboard during consolidation. These panels
+       are the honest half of the scoring story: what moved the score, and
+       which signals are not measuring yet. Dropping them to delete the
+       second dashboard would have removed the only place the score
+       explains itself. -->
+  <section class="grid" aria-label="Score explanation">
+
+    <article class="card card-tilt span-6" id="explainCard">
+      <h2 class="card-title">Why your score is what it is</h2>
+      <p class="card-sub">Every figure here is computed from your own sessions</p>
+      <div class="explain" id="explainBody"></div>
+    </article>
+
+    <article class="card card-tilt span-6" id="readinessCard">
+      <h2 class="card-title">Signal readiness</h2>
+      <p class="card-sub">
+        Two signals spend a warm-up period deliberately doing nothing. Until they are
+        ready they contribute exactly zero — shown here so a measurement never switches
+        on without warning.
+      </p>
+      <ul class="readiness" id="readinessList"></ul>
+    </article>
+
+  </section>
+</div><!-- /insights -->
+
+<!-- ═══════════════════════════════════════════════════════════
+     CALENDAR
+     ═══════════════════════════════════════════════════════════ -->
+<div class="view" data-view="calendar" hidden>
+  <section class="grid" aria-label="Activity calendar">
+
+    <article class="card card-tilt span-12" id="calendarCard">
+      <header class="card-head">
+        <div>
+          <h2 class="card-title">Activity calendar</h2>
+          <p class="card-sub">Pick a day to see what you typed and what you pasted, site by site</p>
+        </div>
+        <div class="cal-nav">
+          <button class="cal-arrow" id="calPrev" type="button" aria-label="Previous month">&#8249;</button>
+          <span class="cal-month" id="calMonth">August 2026</span>
+          <button class="cal-arrow" id="calNext" type="button" aria-label="Next month">&#8250;</button>
+        </div>
+      </header>
+
+      <div class="cal-body">
+        <div class="cal-side">
+          <div class="cal-dows" aria-hidden="true">
+            <span>Su</span><span>Mo</span><span>Tu</span><span>We</span>
+            <span>Th</span><span>Fr</span><span>Sa</span>
+          </div>
+          <div class="cal-grid" id="calGrid" role="grid" aria-label="Days of the month"></div>
+          <footer class="cal-legend">
+            <span class="legend-item"><i class="dot-key k1"></i>light</span>
+            <span class="legend-item"><i class="dot-key k3"></i>heavy</span>
+            <span class="legend-item"><i class="dot-key flagged"></i>flagged graded session</span>
+          </footer>
+        </div>
+
+        <div class="cal-detail" id="calDetail"></div>
+      </div>
+    </article>
+
+  </section>
+</div><!-- /calendar -->
+
+<!-- ═══════════════════════════════════════════════════════════
+     SESSIONS
+     ═══════════════════════════════════════════════════════════ -->
+<div class="view" data-view="sessions" hidden>
+  <section class="grid" aria-label="Sessions">
+    <article class="card card-tilt span-12" id="activityCard">
+      <header class="card-head">
+        <div>
+          <h2 class="card-title">Recent activity</h2>
+          <p class="card-sub">Across every tracked category</p>
+        </div>
+        <div class="seg" role="group" aria-label="Filter by category">
+          <button class="seg-btn is-on" type="button" data-filter="all" aria-pressed="true">All</button>
+          <button class="seg-btn" type="button" data-filter="writing" aria-pressed="false">Writing</button>
+          <button class="seg-btn" type="button" data-filter="assessment" aria-pressed="false">Graded</button>
+          <button class="seg-btn" type="button" data-filter="ai_assistant" aria-pressed="false">AI</button>
+        </div>
+      </header>
+      <ul class="session-list" id="sessionList"></ul>
+      <p class="empty-note" id="sessionsEmpty" hidden>
+        No sessions yet. Install the extension, link it to this account, and start
+        writing — sessions appear here within a minute.
+      </p>
+    </article>
+  </section>
+</div><!-- /sessions -->
+
+<!-- ═══════════════════════════════════════════════════════════
+     COHORT (institution view)
+
+     Admin only, and ported rather than dropped — it was the one genuinely
+     unique feature of the React dashboard. The nav entry is added at
+     runtime only when the signed-in account's role is 'admin', so a
+     student never sees a link to a page they cannot open.
+     ═══════════════════════════════════════════════════════════ -->
+<div class="view" data-view="cohort" hidden>
+  <section class="grid" aria-label="Cohort">
+    <article class="card span-12" id="cohortCard">
+      <h2 class="card-title">Cohort overview</h2>
+      <p class="card-sub">
+        Aggregate only. Individual students are never identifiable here, and the whole
+        view is withheld below a minimum cohort size rather than shown with small numbers.
+      </p>
+      <div id="cohortBody"></div>
+    </article>
+  </section>
+</div><!-- /cohort -->
+
+<!-- ═══════════════════════════════════════════════════════════
+     PROFILE & SETTINGS — one page, nine sections.
+
+     Everything that used to be a Settings button, a theme toggle, or a row
+     in the Dashboard's "More about your data" accordion lives here now.
+     There is no second settings surface anywhere in the app.
+     ═══════════════════════════════════════════════════════════ -->
+<div class="view" data-view="settings" hidden>
+  <section class="settings">
+
+    <nav class="set-nav" aria-label="Settings sections">
+      <a class="set-nav-link is-active" href="#/settings/profile" data-sec="profile">Profile</a>
+      <a class="set-nav-link" href="#/settings/appearance" data-sec="appearance">Preferences &amp; Appearance</a>
+      <a class="set-nav-link" href="#/settings/tracking" data-sec="tracking">Tracking</a>
+      <a class="set-nav-link" href="#/settings/privacy" data-sec="privacy">Privacy &amp; Data</a>
+      <a class="set-nav-link" href="#/settings/security" data-sec="security">Security</a>
+      <a class="set-nav-link" href="#/settings/devices" data-sec="devices">Connected Devices</a>
+      <a class="set-nav-link" href="#/settings/notifications" data-sec="notifications">Notifications</a>
+      <a class="set-nav-link" href="#/settings/about" data-sec="about">About</a>
+    </nav>
+
+    <div class="set-body">
+
+      <!-- 1 ── PROFILE ─────────────────────────────────────── -->
+      <section class="set-sec" data-sec="profile">
+        <h1 class="set-title">Profile</h1>
+        <p class="set-sub">How you appear in this dashboard.</p>
+
+        <div class="set-card">
+          <!-- Photo upload lives HERE, not on the header avatar. The avatar
+               is now the entry point for this menu, and one control cannot
+               both open a menu and open a file picker. The photo itself
+               never leaves this browser — see Privacy & Data. -->
+          <div class="set-avatar-row">
+            <span class="set-avatar" id="setAvatar">—</span>
+            <div>
+              <p class="set-avatar-name" id="setAvatarName">—</p>
+              <p class="set-avatar-mail" id="setAvatarMail">—</p>
+              <button class="btn btn-ghost btn-sm" type="button" id="photoBtn">Change photo</button>
+              <input type="file" id="fileInput" accept="image/jpeg,image/png,image/webp" hidden>
+              <p class="avatar-msg" id="uploadError" role="alert" hidden></p>
+            </div>
+          </div>
+
+          <label class="field">
+            <span class="field-label">Display name</span>
+            <input class="input" id="setName" type="text" maxlength="80" autocomplete="name">
+          </label>
+
+          <label class="field">
+            <span class="field-label">Email</span>
+            <input class="input" id="setEmail" type="email" disabled>
+            <span class="field-hint">Email is an identity key. Changing it is a verification
+              flow rather than a text field, so it is not editable here.</span>
+          </label>
+
+          <div class="field">
+            <span class="field-label">Email verification</span>
+            <p class="set-inline">
+              <span class="badge" id="verifyBadge">—</span>
+              <button class="btn btn-ghost" type="button" id="btnSendVerify" hidden>Send verification code</button>
+            </p>
+            <div class="set-inline" id="verifyCodeRow" hidden>
+              <input class="input input-code" id="verifyCode" inputmode="numeric" maxlength="6" placeholder="000000">
+              <button class="btn btn-primary" type="button" id="btnVerifyEmail">Verify</button>
+            </div>
+          </div>
+
+          <div class="set-actions">
+            <button class="btn btn-primary" type="button" id="btnSaveProfile">Save changes</button>
+            <span class="set-msg" id="profileMsg" role="status"></span>
+          </div>
+        </div>
+      </section>
+
+      <!-- 2 ── PREFERENCES & APPEARANCE ────────────────────── -->
+      <section class="set-sec" data-sec="appearance" hidden>
+        <h1 class="set-title">Preferences &amp; Appearance</h1>
+        <p class="set-sub">How this dashboard looks and how often it refreshes.</p>
+
+        <div class="set-card">
+          <div class="field">
+            <span class="field-label">Theme</span>
+            <div class="seg seg-wide" role="radiogroup" aria-label="Theme">
+              <button class="seg-btn" type="button" data-theme-choice="light" role="radio" aria-checked="false">Light</button>
+              <button class="seg-btn" type="button" data-theme-choice="dark" role="radio" aria-checked="false">Dark</button>
+              <button class="seg-btn" type="button" data-theme-choice="system" role="radio" aria-checked="false">System</button>
+            </div>
+            <span class="field-hint">System follows your operating system's light/dark setting
+              and changes with it while this page is open.</span>
+          </div>
+
+          <label class="field">
+            <span class="field-label">Fallback refresh</span>
+            <select class="input" id="setPoll">
+              <option value="10000">Every 10 seconds</option>
+              <option value="30000">Every 30 seconds</option>
+              <option value="60000">Every minute</option>
+              <option value="120000" selected>Every 2 minutes</option>
+              <option value="0">Never</option>
+            </select>
+            <span class="field-hint">Updates normally arrive live, within a second or two of
+              the activity happening. This is only the backup refresh for when a live
+              connection can't be established — you'll see "Offline" on the dashboard when
+              that is the case.</span>
+          </label>
+
+          <div class="set-actions">
+            <span class="set-msg" id="apprMsg" role="status">Saved automatically.</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- 3 ── TRACKING ────────────────────────────────────── -->
+      <section class="set-sec" data-sec="tracking" hidden>
+        <h1 class="set-title">Tracking</h1>
+        <p class="set-sub">Which kinds of work the extension measures. Stored on the server,
+          so every browser you sign in on picks up the same choice.</p>
+
+        <div class="set-card">
+          <label class="toggle-row">
+            <input type="checkbox" id="trkWriting" class="toggle">
+            <span class="toggle-text">
+              <strong>Writing</strong>
+              <small>Docs, notes, editors and code — ordinary independent drafting.</small>
+            </span>
+          </label>
+
+          <label class="toggle-row">
+            <input type="checkbox" id="trkAssessment" class="toggle">
+            <span class="toggle-text">
+              <strong>Assessments</strong>
+              <small>Quizzes, exams and graded submissions. Scored against a separate
+                baseline, never mixed with ordinary drafting.</small>
+            </span>
+          </label>
+
+          <label class="toggle-row">
+            <input type="checkbox" id="trkAi" class="toggle">
+            <span class="toggle-text">
+              <strong>AI assistants</strong>
+              <small>Records that an assistant was used and how many prompts were sent.
+                Never what was asked or answered.</small>
+            </span>
+          </label>
+
+          <label class="field">
+            <span class="field-label">Excluded domains</span>
+            <textarea class="input input-area" id="setExcluded" rows="4"
+                      placeholder="one domain per line&#10;example.com"></textarea>
+            <span class="field-hint">Nothing is collected on these sites at all. The server
+              normalises what you type, so the list below is what actually takes effect.</span>
+          </label>
+
+          <div class="set-actions">
+            <button class="btn btn-primary" type="button" id="btnSaveTracking">Save tracking settings</button>
+            <span class="set-msg" id="trackingMsg" role="status"></span>
+          </div>
+        </div>
+      </section>
+
+      <!-- 4 ── PRIVACY & DATA ──────────────────────────────── -->
+      <section class="set-sec" data-sec="privacy" hidden>
+        <h1 class="set-title">Privacy &amp; Data</h1>
+        <p class="set-sub">Exactly what leaves your device, and exactly what does not.</p>
+
+        <div class="set-card">
+          <h2 class="set-h2">What is collected</h2>
+          <ul class="set-list">
+            <li>Counts of keystrokes, grouped only as printable, backspace/delete, and undo.</li>
+            <li>The <em>number of characters</em> in a paste — never the pasted text.</li>
+            <li>Active time per session, the site's domain, and the page path.</li>
+            <li>A histogram of pauses between keystrokes, as bucket counts.</li>
+            <li>How many prompts were submitted on an AI assistant site.</li>
+            <li>Tab-switches away during a graded assessment.</li>
+          </ul>
+
+          <h2 class="set-h2">What is never collected</h2>
+          <ul class="set-list set-list-no">
+            <li>The text you type. Not a word of it, ever.</li>
+            <li>Clipboard contents. Pastes are measured with <code>.length</code> and the
+              string is discarded in the same instant it is read.</li>
+            <li>Ordered keystroke sequences. Rhythm is stored as bucket counts precisely
+              because the <em>ordering</em> is what could leak content — destroying it is
+              the whole safety argument.</li>
+            <li>Page content, screenshots, form values, or your browsing history.</li>
+            <li>Hardware fingerprints. Your device id is a random UUID generated at
+              install, so it can be revoked and does not follow you between accounts.</li>
+          </ul>
+
+          <h2 class="set-h2">What stays on this device</h2>
+          <ul class="set-list">
+            <li>Your profile photo — it is stored in this browser and never uploaded.</li>
+            <li>The extension's cached settings copy and its retry queue.</li>
+          </ul>
+
+          <div class="set-actions set-actions-split">
+            <button class="btn btn-ghost" type="button" id="btnExport">Download my data (JSON)</button>
+            <button class="btn btn-danger" type="button" id="btnDeleteData">Delete all my tracked data</button>
+          </div>
+          <span class="set-msg" id="privacyMsg" role="status"></span>
+
+          <div class="set-danger">
+            <h2 class="set-h2">Delete account</h2>
+            <p class="set-note">Removes your account and every row belonging to it, and releases
+              your email address so you could sign up again later. This cannot be undone.</p>
+            <div class="set-inline">
+              <input class="input" id="delConfirm" placeholder="Type DELETE to confirm" autocomplete="off">
+              <input class="input" id="delPassword" type="password" placeholder="Your password" autocomplete="current-password">
+              <button class="btn btn-danger" type="button" id="btnDeleteAccount">Delete account</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 5 ── SECURITY ────────────────────────────────────── -->
+      <section class="set-sec" data-sec="security" hidden>
+        <h1 class="set-title">Security</h1>
+        <p class="set-sub">Your password and the sessions currently signed in.</p>
+
+        <div class="set-card">
+          <h2 class="set-h2" id="pwHeading">Change password</h2>
+
+          <label class="field" id="curPwField">
+            <span class="field-label">Current password</span>
+            <input class="input" id="pwCurrent" type="password" autocomplete="current-password">
+          </label>
+
+          <!-- Shown only for an account that has never had a password (an
+               OTP or Google sign-in). The backend gates adding a first
+               password on a fresh emailed code rather than on the session
+               alone: that session may be a borrowed laptop still holding a
+               login, and adding a permanent credential should require the
+               mailbox the account is actually anchored to. -->
+          <div class="field" id="setPwCodeField" hidden>
+            <span class="field-label">Emailed code</span>
+            <div class="set-inline">
+              <input class="input input-code" id="pwCode" inputmode="numeric"
+                     maxlength="6" placeholder="000000" autocomplete="one-time-code">
+              <button class="btn btn-ghost" type="button" id="btnSendPwCode">Email me a code</button>
+            </div>
+          </div>
+          <label class="field">
+            <span class="field-label">New password</span>
+            <input class="input" id="pwNew" type="password" autocomplete="new-password">
+            <span class="field-hint">At least 10 characters. Length matters far more than symbols.</span>
+          </label>
+          <label class="field">
+            <span class="field-label">Confirm new password</span>
+            <input class="input" id="pwConfirm" type="password" autocomplete="new-password">
+          </label>
+          <div class="set-actions">
+            <button class="btn btn-primary" type="button" id="btnChangePw">Update password</button>
+            <span class="set-msg" id="securityMsg" role="status"></span>
+          </div>
+        </div>
+
+        <div class="set-card">
+          <h2 class="set-h2">Active sessions</h2>
+          <p class="set-note">Every browser and device currently holding a valid session for
+            this account.</p>
+          <ul class="dev-list" id="sessionsList"></ul>
+          <div class="set-actions">
+            <button class="btn btn-ghost" type="button" id="btnLogoutOthers">Sign out all other devices</button>
+            <span class="set-msg" id="sessionsMsg" role="status"></span>
+          </div>
+        </div>
+      </section>
+
+      <!-- 6 ── CONNECTED DEVICES ───────────────────────────── -->
+      <section class="set-sec" data-sec="devices" hidden>
+        <h1 class="set-title">Connected Devices</h1>
+        <p class="set-sub">The Chrome extension installs sending data to this account.</p>
+
+        <div class="set-card">
+          <h2 class="set-h2">Link a Chrome extension</h2>
+          <p class="set-note">Open the Autonomize extension popup, choose <strong>Link an
+            account</strong>, and type the six-character code it shows here. The code alone
+            grants nothing — it only works while you are signed in on this page, which is
+            what makes it safe to read aloud.</p>
+          <div class="set-inline">
+            <input class="input input-code" id="linkCode" maxlength="6" placeholder="ABC123"
+                   autocomplete="off" spellcheck="false">
+            <button class="btn btn-primary" type="button" id="btnLink">Link extension</button>
+          </div>
+          <span class="set-msg" id="linkMsg" role="status"></span>
+        </div>
+
+        <div class="set-card">
+          <h2 class="set-h2">Linked devices</h2>
+          <ul class="dev-list" id="deviceList"></ul>
+          <p class="empty-note" id="devicesEmpty" hidden>No extension linked yet.</p>
+        </div>
+      </section>
+
+      <!-- 7 ── NOTIFICATIONS ───────────────────────────────── -->
+      <section class="set-sec" data-sec="notifications" hidden>
+        <h1 class="set-title">Notifications</h1>
+        <p class="set-sub">In-dashboard alerts. These are generated from your own data on
+          this page — nothing is emailed or pushed.</p>
+
+        <div class="set-card">
+          <label class="toggle-row">
+            <input type="checkbox" id="ntfBaseline" class="toggle">
+            <span class="toggle-text">
+              <strong>Baseline milestones</strong>
+              <small>Tell me when enough sessions exist for a reliable personal trend.</small>
+            </span>
+          </label>
+          <label class="toggle-row">
+            <input type="checkbox" id="ntfDrop" class="toggle">
+            <span class="toggle-text">
+              <strong>Score drops</strong>
+              <small>Tell me when my score falls well below my own baseline.</small>
+            </span>
+          </label>
+          <label class="toggle-row">
+            <input type="checkbox" id="ntfGraded" class="toggle">
+            <span class="toggle-text">
+              <strong>Graded-session flags</strong>
+              <small>Tell me when an assessment session is flagged as high risk.</small>
+            </span>
+          </label>
+          <div class="set-actions">
+            <span class="set-msg" id="notifMsg" role="status">Saved automatically.</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- 8 ── ABOUT ───────────────────────────────────────── -->
+      <section class="set-sec" data-sec="about" hidden>
+        <h1 class="set-title">About</h1>
+        <p class="set-sub">What this dashboard is connected to, and what its numbers mean.</p>
+
+        <div class="set-card">
+          <dl class="set-dl">
+            <dt>Backend</dt><dd><code id="aboutBackend">—</code></dd>
+            <dt>Database</dt><dd id="aboutDb">—</dd>
+            <dt>Connection</dt><dd id="aboutConn">—</dd>
+            <dt>Signed in as</dt><dd id="aboutUser">—</dd>
+            <dt>Extension</dt><dd id="aboutExt">—</dd>
+          </dl>
+
+          <h2 class="set-h2">How the score works, and what it cannot tell you</h2>
+          <p class="set-note">Your independence score compares your recent sessions against
+            <strong>your own earlier sessions</strong> — never against other students, and
+            never against a population average. That is a deliberate limit: this project has
+            no student cohort behind it, so any claim about real-world accuracy, F1, AUC, or
+            whether using it causes better outcomes would be invented. It is not measured, so
+            it is not claimed.</p>
+          <p class="set-note">What the score can honestly say is narrow and useful: how much of
+            your recent tracked work you produced yourself versus pasted in, and whether that
+            share is moving up or down relative to how you were working before. A personal
+            baseline needs a handful of sessions before it means anything, and until then the
+            dashboard says so rather than showing a confident number built on one data point.</p>
+          <p class="set-note">Any simulated or trial figures used during development are
+            labelled as simulated wherever they appear. They are not shown on this page.</p>
+        </div>
+      </section>
+
+    </div>
+  </section>
+</div><!-- /settings -->
+
+  <footer class="site-foot">
+    <div class="foot-top">
+
+      <div class="foot-brand">
+        <a class="foot-mark" href="#main">
+          <img src="logo.png" alt="" width="34" height="34">
+          <span>Autonomize</span>
+        </a>
+        <p class="foot-tag">Independence, measured against your own baseline.</p>
+      </div>
+
+      <!-- Every link here is a real destination. The footer NAVIGATES; it
+           never carries controls. Tracking configuration, privacy controls,
+           theme and device management all live in Profile → Settings, and
+           the links below point at those sections rather than duplicating
+           them — which is what the old "Data & Privacy / Tracking Settings /
+           Your Data" trio was doing, three vague labels for one page. -->
+      <nav class="foot-cols" aria-label="Footer">
+        <div class="foot-col">
+          <h2 class="foot-head">Product</h2>
+          <ul>
+            <li><a href="#/dashboard">Dashboard</a></li>
+            <li><a href="#/sessions">Sessions</a></li>
+            <li><a href="#/insights">Insights</a></li>
+            <li><a href="#/calendar">Calendar</a></li>
+          </ul>
+        </div>
+
+        <div class="foot-col">
+          <h2 class="foot-head">Account</h2>
+          <ul>
+            <li><a href="#/settings/profile">Profile &amp; Settings</a></li>
+            <li><a href="#/settings/devices">Connected Devices</a></li>
+            <li><a href="#/settings/notifications">Notifications</a></li>
+          </ul>
+        </div>
+
+        <div class="foot-col">
+          <h2 class="foot-head">Privacy &amp; Security</h2>
+          <ul>
+            <li><a href="#/settings/privacy">Privacy</a></li>
+            <li><a href="#/settings/privacy">Your Data</a></li>
+            <li><a href="#/settings/tracking">Tracking &amp; Permissions</a></li>
+            <li><a href="#/settings/security">Security</a></li>
+          </ul>
+        </div>
+
+        <div class="foot-col">
+          <h2 class="foot-head">Support</h2>
+          <ul>
+            <li><a href="#/settings/about">Help Center</a></li>
+            <li><a href="mailto:autonomize.project@psit.ac.in">Contact</a></li>
+            <li><a href="mailto:autonomize.project@psit.ac.in?subject=Autonomize%20feedback">Feedback</a></li>
+          </ul>
+        </div>
+      </nav>
+
+    </div>
+
+    <div class="foot-bar">
+      <p>&copy; 2026 Autonomize</p>
+      <p class="foot-legal">
+        <a href="#/settings/privacy">Privacy</a>
+        <span aria-hidden="true">|</span>
+        <a href="#/settings/about">Terms</a>
+        <span aria-hidden="true">|</span>
+        <a href="#/settings/security">Security</a>
+      </p>
+      <p class="foot-status"><span id="footStatus">Checking…</span> <span class="status-dot" id="footDot" aria-hidden="true"></span></p>
+    </div>
+  </footer>
+
+</main>
+
+<!-- ═══════════════════════════════════════════════════════════
+     AUTHENTICATION
+
+     Same shell, same tokens, same type scale as the dashboard behind it —
+     deliberately not a separate "marketing" design. Signing in should feel
+     like opening the application, not visiting a different website.
+
+     Every screen below talks to the existing FastAPI auth backend. There is
+     no frontend session logic here beyond holding the access token the
+     server issued: no mock users, no hardcoded credentials, no client-side
+     decision about who anyone is.
+     ═══════════════════════════════════════════════════════════ -->
+<div class="authwrap" id="authWrap" hidden>
+  <main class="authcard" role="main">
+
+    <a class="auth-brand" href="#/login">
+      <img src="logo.png" alt="" width="34" height="34">
+      <span>Autonomize</span>
+    </a>
+
+    <!-- ── LOGIN ─────────────────────────────────────────── -->
+    <section class="auth-pane" data-pane="login">
+      <h1 class="auth-title">Sign in</h1>
+      <p class="auth-sub">Independence, measured against your own baseline.</p>
+
+      <form class="auth-form" id="formLogin" novalidate>
+        <label class="field">
+          <span class="field-label">Email</span>
+          <input class="input" type="email" id="loginEmail" autocomplete="email" required>
+        </label>
+
+        <label class="field">
+          <span class="field-label field-label-row">
+            Password
+            <a class="field-link" href="#/forgot">Forgot password?</a>
+          </span>
+          <input class="input" type="password" id="loginPassword" autocomplete="current-password" required>
+        </label>
+
+        <p class="auth-error" id="loginError" role="alert" hidden></p>
+
+        <button class="btn btn-primary btn-block" type="submit" id="loginSubmit">Continue</button>
+      </form>
+
+      <div class="auth-or" data-google-only hidden><span>or</span></div>
+      <button class="btn btn-ghost btn-block auth-google" type="button" id="loginGoogle" hidden>
+        <svg viewBox="0 0 18 18" width="16" height="16" aria-hidden="true" class="gmark">
+          <path fill="#4285F4" stroke="none" d="M17.6 9.2c0-.6-.1-1.3-.2-1.9H9v3.5h4.8a4.1 4.1 0 0 1-1.8 2.7v2.2h2.9c1.7-1.6 2.7-3.9 2.7-6.5z"/>
+          <path fill="#34A853" stroke="none" d="M9 18c2.4 0 4.5-.8 6-2.2l-2.9-2.2c-.8.5-1.8.9-3.1.9-2.4 0-4.4-1.6-5.1-3.8H.9v2.3A9 9 0 0 0 9 18z"/>
+          <path fill="#FBBC05" stroke="none" d="M3.9 10.7a5.4 5.4 0 0 1 0-3.4V5H.9a9 9 0 0 0 0 8l3-2.3z"/>
+          <path fill="#EA4335" stroke="none" d="M9 3.6c1.3 0 2.5.5 3.4 1.3l2.6-2.6A9 9 0 0 0 .9 5l3 2.3C4.6 5.2 6.6 3.6 9 3.6z"/>
+        </svg>
+        Continue with Google
+      </button>
+
+      <p class="auth-switch">New here? <a href="#/signup">Create an account</a></p>
+      <p class="auth-switch"><a href="#/otp">Sign in with an email code instead</a></p>
+    </section>
+
+    <!-- ── SIGNUP ────────────────────────────────────────── -->
+    <section class="auth-pane" data-pane="signup" hidden>
+      <h1 class="auth-title">Create your account</h1>
+      <p class="auth-sub">Your baseline starts from your first tracked session.</p>
+
+      <form class="auth-form" id="formSignup" novalidate>
+        <label class="field">
+          <span class="field-label">Name</span>
+          <input class="input" type="text" id="suName" autocomplete="name" maxlength="80" required>
+        </label>
+
+        <label class="field">
+          <span class="field-label">Email</span>
+          <input class="input" type="email" id="suEmail" autocomplete="email" required>
+        </label>
+
+        <label class="field">
+          <span class="field-label">Password</span>
+          <input class="input" type="password" id="suPassword" autocomplete="new-password" required>
+          <span class="field-hint" id="suStrength">At least 10 characters.</span>
+        </label>
+
+        <label class="field">
+          <span class="field-label">Confirm password</span>
+          <input class="input" type="password" id="suConfirm" autocomplete="new-password" required>
+        </label>
+
+        <p class="auth-error" id="signupError" role="alert" hidden></p>
+
+        <button class="btn btn-primary btn-block" type="submit" id="signupSubmit">Continue</button>
+      </form>
+
+      <div class="auth-or" data-google-only hidden><span>or</span></div>
+      <button class="btn btn-ghost btn-block auth-google" type="button" id="signupGoogle" hidden>
+        <svg viewBox="0 0 18 18" width="16" height="16" aria-hidden="true" class="gmark">
+          <path fill="#4285F4" stroke="none" d="M17.6 9.2c0-.6-.1-1.3-.2-1.9H9v3.5h4.8a4.1 4.1 0 0 1-1.8 2.7v2.2h2.9c1.7-1.6 2.7-3.9 2.7-6.5z"/>
+          <path fill="#34A853" stroke="none" d="M9 18c2.4 0 4.5-.8 6-2.2l-2.9-2.2c-.8.5-1.8.9-3.1.9-2.4 0-4.4-1.6-5.1-3.8H.9v2.3A9 9 0 0 0 9 18z"/>
+          <path fill="#FBBC05" stroke="none" d="M3.9 10.7a5.4 5.4 0 0 1 0-3.4V5H.9a9 9 0 0 0 0 8l3-2.3z"/>
+          <path fill="#EA4335" stroke="none" d="M9 3.6c1.3 0 2.5.5 3.4 1.3l2.6-2.6A9 9 0 0 0 .9 5l3 2.3C4.6 5.2 6.6 3.6 9 3.6z"/>
+        </svg>
+        Continue with Google
+      </button>
+
+      <p class="auth-switch">Already have an account? <a href="#/login">Sign in</a></p>
+    </section>
+
+    <!-- ── OTP ───────────────────────────────────────────── -->
+    <section class="auth-pane" data-pane="otp" hidden>
+      <h1 class="auth-title" id="otpTitle">Check your email</h1>
+      <p class="auth-sub" id="otpSub">Enter the six-digit code we sent you.</p>
+
+      <form class="auth-form" id="formOtp" novalidate>
+        <label class="field" id="otpEmailField">
+          <span class="field-label">Email</span>
+          <input class="input" type="email" id="otpEmail" autocomplete="email" required>
+        </label>
+
+        <label class="field" id="otpCodeField" hidden>
+          <span class="field-label">Verification code</span>
+          <input class="input input-code input-code-lg" id="otpCode" inputmode="numeric"
+                 autocomplete="one-time-code" maxlength="6" placeholder="000000">
+        </label>
+
+        <p class="auth-error" id="otpError" role="alert" hidden></p>
+
+        <button class="btn btn-primary btn-block" type="submit" id="otpSubmit">Send code</button>
+        <button class="btn btn-ghost btn-block" type="button" id="otpResend" hidden>Resend code</button>
+      </form>
+
+      <p class="auth-switch"><a href="#/login">Back to sign in</a></p>
+    </section>
+
+    <!-- ── FORGOT / RESET ────────────────────────────────── -->
+    <section class="auth-pane" data-pane="forgot" hidden>
+      <h1 class="auth-title" id="fgTitle">Reset your password</h1>
+      <p class="auth-sub" id="fgSub">We'll email you a code to confirm it's you.</p>
+
+      <form class="auth-form" id="formForgot" novalidate>
+        <label class="field" id="fgEmailField">
+          <span class="field-label">Email</span>
+          <input class="input" type="email" id="fgEmail" autocomplete="email" required>
+        </label>
+
+        <div id="fgResetFields" hidden>
+          <label class="field">
+            <span class="field-label">Reset code</span>
+            <input class="input input-code input-code-lg" id="fgCode" inputmode="numeric"
+                   autocomplete="one-time-code" maxlength="6" placeholder="000000">
+          </label>
+          <label class="field">
+            <span class="field-label">New password</span>
+            <input class="input" type="password" id="fgPassword" autocomplete="new-password">
+            <span class="field-hint">At least 10 characters.</span>
+          </label>
+          <label class="field">
+            <span class="field-label">Confirm new password</span>
+            <input class="input" type="password" id="fgConfirm" autocomplete="new-password">
+          </label>
+        </div>
+
+        <p class="auth-error" id="fgError" role="alert" hidden></p>
+        <p class="auth-ok" id="fgOk" role="status" hidden></p>
+
+        <button class="btn btn-primary btn-block" type="submit" id="fgSubmit">Send reset code</button>
+        <button class="btn btn-ghost btn-block" type="button" id="fgResend" hidden>Resend code</button>
+      </form>
+
+      <p class="auth-switch"><a href="#/login">Back to sign in</a></p>
+    </section>
+
+  </main>
+</div>
+
+<!-- Full-page loader shown while the stored credential is being checked
+     against the server. Without it the app flashes the login screen for a
+     signed-in user on every reload, which reads as being logged out. -->
+<!-- Starts hidden and is shown by the auth controller once it exists. A
+     visible-by-default gate would cover the dashboard for anyone loading
+     the page before that controller ships. -->
+<div class="bootgate" id="bootGate" hidden>
+  <span class="bootgate-spin" aria-hidden="true"></span>
+  <p>Checking your session…</p>
+</div>
+
+
+<!-- Load order matters:
+     lib.js             pure presentation logic (no DOM, no network)
+     autonomize-api.js  transport + auth client (no DOM, no boot)
+     script.js          chart/gauge/calendar renderer; exposes
+                        window.AutonomizeRender and owns the theme
+     app.js             auth gate, routing, settings; drives the two above
+     app.js must come last because it calls into both on boot. -->
+<script src="lib.js"></script>
+<script src="autonomize-api.js"></script>
+<script src="script.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,85 @@
+# ---------------------------------------------------------------------------
+# Secrets — the only entries here that are actually dangerous to omit.
+# `.env.example` files are deliberately NOT ignored: they're documentation.
+# ---------------------------------------------------------------------------
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# ---------------------------------------------------------------------------
+# Databases. Every SQLite artefact this project can produce, including the
+# WAL/shared-memory sidecars, which are easy to forget and get committed as
+# mysterious binary blobs.
+# ---------------------------------------------------------------------------
+*.db
+*.db-wal
+*.db-shm
+*.sqlite
+*.sqlite3
+
+# ---------------------------------------------------------------------------
+# Python
+# ---------------------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.coverage
+htmlcov/
+.venv/
+venv/
+env/
+
+# ---------------------------------------------------------------------------
+# Node
+# ---------------------------------------------------------------------------
+node_modules/
+npm-debug.log*
+.npm/
+.vite/
+
+# ---------------------------------------------------------------------------
+# Playwright
+# ---------------------------------------------------------------------------
+test-results/
+playwright-report/
+blob-report/
+.playwright/
+
+# ---------------------------------------------------------------------------
+# NOTE: extension/dashboard/ is intentionally NOT ignored.
+# It is the built React app, and committing it is what lets someone load the
+# unpacked extension straight from a clone without installing Node at all.
+# That's a deliberate trade (a build artefact in git) for a much shorter
+# "try it" path — see the README's "Load the extension" section.
+# ---------------------------------------------------------------------------
+
+# ---------------------------------------------------------------------------
+# Editors / OS
+# ---------------------------------------------------------------------------
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+
+# Trained model artefact. Not committed: it is a build output, it is
+# specific to the data it was trained on, and a model fitted on simulated
+# history must never be mistaken for one fitted on real students.
+backend/model.json
+# Archived model versions. Build artefacts, specific to the data they were
+# fitted on, and a model trained on simulated history must never be
+# mistaken for one trained on real students.
+backend/models/
+
+# Chrome Web Store package, produced by extension/package.sh. A build
+# artefact whose contents depend on which API origin it was built for —
+# committing one guarantees somebody ships the wrong backend.
+#
+# It builds into build/ rather than the repository root, so that a
+# directory listing has exactly one thing in it that looks like an
+# extension: the `extension/` folder. That is the one to load in Chrome.
+build/
+autonomize-extension.zip
