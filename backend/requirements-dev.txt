@@ -2,4 +2,4 @@
 # test suite (`pytest` from the `backend/` directory). Kept separate from
 # requirements.txt so a production install doesn't pull in test tooling.
 -r requirements.txt
-pytest>=8.0
+pytest>=9.1.1
