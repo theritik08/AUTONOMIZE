@@ -30,7 +30,7 @@
 # skip cleanly when this file is not installed, so production is unaffected.
 
 scikit-learn==1.8.0
-numpy==2.4.4
+numpy==2.5.2
 # scipy is a scikit-learn dependency and is used directly for the Spearman
 # rank correlation in the isolation-forest oracle test.
 scipy==1.17.1
