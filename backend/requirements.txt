@@ -20,7 +20,7 @@ psycopg_pool>=3.2
 # ID token against their published JWKS. Without it the only options are
 # to trust an unverified token — which turns "sign in with Google" into
 # "sign in as anybody" — or to not support Google at all.
-pyjwt[crypto]>=2.8
+pyjwt[crypto]>=2.13.0
 
 # Argon2id password hashing (see passwords.py). This is a C extension, and
 # it is the one native dependency in this backend. It is paid for
